@@ -3,10 +3,15 @@ import { BsArrowLeft } from 'react-icons/bs'
 import SelectedMember from './SelectedMember';
 import ChatCard from '../ChatCard/ChatCard'
 import NewGroup from './NewGroup';
-const CreateGroup = () => {
+import { searchUser } from '../../Redux/Auth/Action';
+import { useDispatch, useSelector } from 'react-redux';
+const CreateGroup = ({ setIsGroup }) => {
     const [newGroup, setNewGroup] = useState(false)
     const [groupMember, setGroupMember] = useState(new Set());
     const [query, setQuery] = useState("")
+    const token = localStorage.getItem("token")
+    const { auth } = useSelector(store => store)
+    const dispatch = useDispatch()
     const handleRemoveMember = (item) => {
         groupMember.delete(item)
         setGroupMember(groupMember)
@@ -14,6 +19,7 @@ const CreateGroup = () => {
 
     const handleSearch = () => {
 
+        dispatch(searchUser({ keyword: query, token }));
     }
 
     return (
@@ -47,7 +53,7 @@ const CreateGroup = () => {
                         </div>
                         <div className='bg-white overflow-y-scroll h-[50.2vh]'>
                             {
-                                query && [1, 1, 1, 1, 1].map((item) =>
+                                query && auth.searchUser?.map((item) =>
                                     <div
                                         onClick={() => {
                                             groupMember.add(item)
@@ -57,7 +63,10 @@ const CreateGroup = () => {
                                         key={item?.id}
                                     >
                                         <hr />
-                                        <ChatCard />
+                                        <ChatCard
+                                            userImg={item.profile_picture}
+                                            name={item.full_name}
+                                        />
                                     </div>)
                             }
                         </div>
@@ -73,7 +82,7 @@ const CreateGroup = () => {
                         </div>
                     </div>
                 )}
-            {newGroup && <NewGroup />}
+            {newGroup && <NewGroup setIsGroup={setIsGroup} groupMember={groupMember} />}
         </div>
     )
 }

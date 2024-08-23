@@ -20,33 +20,69 @@ import java.io.IOException;
 import java.util.List;
 
 public class JwtTokenValidator extends OncePerRequestFilter {
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = request.getHeader("Authorization");
-        if(jwt!=null) {
-            try {
-                jwt = jwt.substring(7);
+//    @Override
+//    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+//        String jwt = request.getHeader("Authorization");
+//        if(jwt!=null) {
+//            try {
+//                jwt = jwt.substring(7);
+//
+//                SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+//                Claims claim = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
+//
+//                String username=String.valueOf(claim.get("email"));
+//                String authorities=String.valueOf(claim.get("authorities"));
+//
+//                List<GrantedAuthority> auths = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
+//
+//                Authentication authentication = new UsernamePasswordAuthenticationToken(username , null , auths );
+//
+//                SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//
+//            }catch (Exception e) {
+//                throw new BadCredentialsException("invalid token recieved...");
+//            }
+//        }
+//        filterChain.doFilter(request, response);
+//    }
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    String jwt = request.getHeader(JwtConstant.JWT_HEADER);
+    if (jwt != null && jwt.startsWith("Bearer ")) {
+        try {
+            jwt = jwt.substring(7); // Bỏ "Bearer " khỏi chuỗi token
 
-                SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
-                Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
+            SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
-                String username=String.valueOf(claims.get("email"));
-                String authorities=String.valueOf(claims.get("authorities"));
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(jwt)
+                    .getBody();
 
-                List<GrantedAuthority> auths = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
+            String username = String.valueOf(claims.get("email"));
+            String authorities = String.valueOf(claims.get("authorities"));
 
-                Authentication authentication = new UsernamePasswordAuthenticationToken(username , null , auths );
+            List<GrantedAuthority> auths = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, auths);
 
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            }catch (Exception e) {
-
-                throw new BadCredentialsException("invalid token recieved...");
-
-
-            }
+        } catch (io.jsonwebtoken.security.SecurityException | io.jsonwebtoken.MalformedJwtException e) {
+            throw new BadCredentialsException("Invalid JWT signature or malformed token", e);
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new BadCredentialsException("Expired JWT token", e);
+        } catch (io.jsonwebtoken.UnsupportedJwtException e) {
+            throw new BadCredentialsException("Unsupported JWT token", e);
+        } catch (IllegalArgumentException e) {
+            throw new BadCredentialsException("JWT claims string is empty", e);
+        } catch (Exception e) {
+            throw new BadCredentialsException("Invalid token received", e);
         }
-        filterChain.doFilter(request, response);
     }
+    filterChain.doFilter(request, response);
 }
+}
+

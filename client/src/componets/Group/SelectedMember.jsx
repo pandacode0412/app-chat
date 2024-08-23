@@ -5,10 +5,14 @@ const SelectedMember = ({ handleRemoveMember, member }) => {
     return (
         <div
             className='flex items-center bg-slate-300 rounded-full'>
-            <img className='w-7 h-7 rounded-full'
-                src='https://cdn.pixabay.com/photo/2023/08/10/18/00/blossom-8182139_640.jpg' />
-            <p className='px-2' > username</p>
-            <AiOutlineClose onClick={handleRemoveMember} className='pr-1 cursor-pointer' />
+            <img
+                className='w-7 h-7 rounded-full'
+                src={member.profile_picture} />
+            <p className='px-2' >{member.full_name}</p>
+            <AiOutlineClose
+                onClick={handleRemoveMember}
+                className='pr-1 cursor-pointer'
+            />
         </div>
     )
 }

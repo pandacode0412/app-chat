@@ -2,6 +2,7 @@ package com.project.chatapp.controller;
 
 
 import com.project.chatapp.config.TokenProvider;
+import com.project.chatapp.exception.UserException;
 import com.project.chatapp.modal.User;
 import com.project.chatapp.repository.UserRepository;
 import com.project.chatapp.request.LoginRequest;
@@ -29,22 +30,27 @@ public class AuthController {
     private TokenProvider tokenProvider;
     private CustomerUserService customerUserService;
 
-    public AuthController(UserRepository userRepository ,  PasswordEncoder passwordEncoder ,  CustomerUserService customerUserService) {
+    public AuthController(  UserRepository userRepository , PasswordEncoder passwordEncoder ,  CustomerUserService customerUserService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.customerUserService = customerUserService;
+//        this.tokenProvider = tokenProvider;
+
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user) throws Exception {
+    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user) throws UserException {
         String email = user.getEmail();
         String full_name = user.getFull_name();
         String password = user.getPassword();
 
-        User isUser = userRepository.findByEmail(email) ;
-        if(isUser != null) {
-            throw  new Exception( "Email is used with another account" + email);
-
+//        User isUser = userRepository.findByEmail(email) ;
+//        if(isUser != null) {
+//            throw new UserException( "Email is used with another account" + email);
+//
+//        }
+        if (userRepository.findByEmail(email) != null) {
+            throw new UserException("Email is used with another account: " + email);
         }
         User createdUser = new User() ;
         createdUser.setEmail(email);
@@ -64,6 +70,7 @@ public class AuthController {
 
     }
 
+    @PostMapping("/signin")
     public ResponseEntity<AuthResponse> loginHandler (@RequestBody LoginRequest req) {
 
         String email =req.getEmail();
@@ -75,7 +82,6 @@ public class AuthController {
 
         String jwt = tokenProvider.generateToken(authentication);
         AuthResponse res = new AuthResponse(jwt , true);
-
 
         return  new ResponseEntity<AuthResponse>(res , HttpStatus.ACCEPTED) ;
 
@@ -90,6 +96,6 @@ public class AuthController {
         if(!passwordEncoder.matches(password , userDetails.getPassword())) {
             throw new BadCredentialsException("invalid password or username");
         }
-        return new UsernamePasswordAuthenticationToken(userDetails , null , userDetails.getAuthorities()  );
+        return new UsernamePasswordAuthenticationToken(userDetails , null , userDetails.getAuthorities() );
     }
 }

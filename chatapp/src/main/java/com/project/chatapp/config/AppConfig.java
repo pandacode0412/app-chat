@@ -17,6 +17,7 @@ import java.util.Collections;
 
 @Configuration
 public class AppConfig {
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
